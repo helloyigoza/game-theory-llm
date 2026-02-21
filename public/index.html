@@ -4,91 +4,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Theory LLM Simulator</title>
+    <title>Diplomacy AI Simulator</title>
     <style>
-        :root {
-            --bg-color: #050505;
-            --panel-bg: #11141c;
-            --text-color: #e2e8f0;
-            --accent: #d97706;
-            /* Amber / Diplomacy color */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
 
-            /* Diplomacy Colors */
+        :root {
+            --bg-color: #030712;
+            --text-color: #f8fafc;
+            --accent: #d97706;
+
+            /* Diplomacy Colors (Brightned for dark mode) */
             --eng-color: #3b82f6;
-            /* Blue */
             --fra-color: #06b6d4;
-            /* Light Blue */
-            --ger-color: #1a202c;
-            /* Dark Grey */
+            --ger-color: #94a3b8;
             --ita-color: #10b981;
-            /* Green */
-            --aus-color: #ef4444;
-            /* Red */
-            --rus-color: #fce7f3;
-            /* White/Pinkish */
-            --tur-color: #f59e0b;
-            /* Yellow */
+            --rus-color: #f472b6;
+
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(217, 119, 6, 0.05), transparent 25%);
             color: var(--text-color);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            color: var(--accent);
+            font-family: 'Fira Code', monospace;
+            font-size: 2.2rem;
+            text-shadow: 0 0 20px rgba(217, 119, 6, 0.3);
+            letter-spacing: 2px;
+            margin: 0 0 10px 0;
+        }
+
+        .header p {
+            color: #94a3b8;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            line-height: 1.6;
+            font-size: 0.95rem;
         }
 
         .btn-start {
-            background-color: var(--accent);
+            background: linear-gradient(135deg, #d97706, #b45309);
             color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 30px;
+            font-size: 14px;
+            font-family: 'Fira Code', monospace;
             border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            font-weight: bold;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
         }
 
         .btn-start:hover {
-            transform: scale(1.05);
-            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
         .arena {
             display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
+            grid-template-columns: 1fr 1.3fr 1fr;
             gap: 20px;
-            height: calc(100vh - 120px);
-            max-width: 1400px;
-            margin: 0 auto;
+            height: calc(100vh - 160px);
+            width: 100%;
+            max-width: 1500px;
+            animation: fadeInUp 0.8s ease-out;
         }
 
         .side-panels {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            overflow-y: auto;
-            padding-right: 5px;
+            gap: 20px;
+            height: 100%;
         }
 
         .agent-panel {
-            background: var(--panel-bg);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-top: 4px solid var(--accent);
             border-radius: 12px;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            border-top: 4px solid var(--accent);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            min-height: 250px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .agent-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
         .agent-panel.eng {
@@ -101,127 +152,237 @@
 
         .agent-panel.ger {
             border-top-color: var(--ger-color);
-            border: 1px solid #334155;
-            border-top: 4px solid var(--ger-color);
         }
 
         .agent-panel.ita {
             border-top-color: var(--ita-color);
         }
 
-        .agent-panel.aus {
-            border-top-color: var(--aus-color);
-        }
-
         .agent-panel.rus {
             border-top-color: var(--rus-color);
         }
 
-        .agent-panel.tur {
-            border-top-color: var(--tur-color);
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .agent-title {
-            margin: 0 0 10px 0;
+            margin: 0;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            font-size: 12px;
+            outline: none;
+            margin-bottom: 10px;
+            appearance: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:hover {
+            border-color: #475569;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 12px;
-            background: #334155;
-            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            transition: all 0.3s ease;
         }
 
         .thinking {
-            animation: pulse 1.5s infinite;
-            background: #eab308;
-            color: #000;
+            animation: glowPulse 1.5s infinite;
+            background: rgba(234, 179, 8, 0.2);
+            color: #fef08a;
+            border-color: rgba(234, 179, 8, 0.5);
         }
 
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
-        .action-log {
-            background: #0b1120;
-            padding: 15px;
+        .log {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
-            height: 300px;
+            flex: 1;
             overflow-y: auto;
-            border: 1px solid #334155;
+            border: 1px inset rgba(255, 255, 255, 0.05);
         }
 
         .log>span:not(:last-child) {
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding-bottom: 15px;
             margin-bottom: 15px;
+            display: block;
         }
 
-        /* Message Bubble specific */
         .msg-bubble {
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 5px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px 12px;
+            border-radius: 0 8px 8px 8px;
+            margin-top: 6px;
             border-left: 3px solid #0ea5e9;
             font-style: italic;
-            color: #f1f5f9;
+            color: #e2e8f0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .msg-bubble::before {
+            content: '';
+            position: absolute;
+            left: -3px;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #0ea5e9;
+            box-shadow: 0 0 10px #0ea5e9;
+        }
+
+        .reasoning-text {
+            color: #64748b;
+            font-style: italic;
+            font-size: 11.5px;
+            margin-top: 6px;
+            padding-left: 10px;
+            border-left: 2px dashed #334155;
         }
 
         .matrix-panel {
-            background: var(--panel-bg);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid #1e293b;
             border-radius: 12px;
-            padding: 20px;
-            text-align: center;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5), 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
             overflow-y: auto;
         }
 
-        .payoff-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 13px;
-        }
-
-        .payoff-table th,
-        .payoff-table td {
-            border: 1px solid #334155;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .payoff-table th {
-            background-color: #0f172a;
-            color: #94a3b8;
-        }
-
-        .score-board {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-            color: #f8fafc;
-        }
-
         .round-indicator {
+            font-family: 'Fira Code', monospace;
             font-size: 18px;
+            color: #38bdf8;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+            background: rgba(15, 23, 42, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #0ea5e9;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .score-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #334155;
+            font-weight: 600;
+        }
+
+        #unit-locations {
+            font-size: 13px;
             color: #cbd5e1;
-            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            line-height: 1.8;
+            flex: 1;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glowPulse {
+            0% {
+                box-shadow: 0 0 5px rgba(234, 179, 8, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(234, 179, 8, 0.2);
+            }
+        }
+
+        /* Model selector options inject logic */
+        optgroup {
+            background: #0f172a;
         }
     </style>
 </head>
@@ -229,204 +390,135 @@
 <body>
 
     <div class="header">
-        <h1 style="color: var(--accent); font-family: monospace;">🌍 AI DIPLOMACY SUMMIT</h1>
-        <p style="color: #94a3b8; max-width: 800px; margin: 0 auto 20px auto;">Oyun Teorisi ve NLP'nin Everest'i:
-            Diplomacy. 7 farklı LLM bir haritayı yönetiyor. Müzakere turunda (Negotiation) özel mesajlaşmalarla
-            sahte/gerçek ittifaklar kurup, Eylem (Action) turunda askeri hamle yaparak (Move/Support) 10 Supply Center'a
-            (Skor) ulaşmaya çalışıyorlar.</p>
-        <button class="btn-start" onclick="startSimulation()">[ EXECUTE: OPERATION_DIPLOMACY ]</button>
+        <h1>[ OPERATION : EUROPEAN THEATER ]</h1>
+        <p>Diplomacy AI Sandbox. 5 Büyük Güç <b>(ENG, FRA, GER, ITA, RUS)</b> Avrupa haritasında kozlarını
+            paylaşıyor.<br>
+            Müzakere turlarında NLP tabanlı gizli ittifaklar ve ihanetler planlanırken, Operasyon turlarında acımasız
+            savaş kararları verilir.</p>
+        <button class="btn-start" onclick="startSimulation()">[ INITIATE WAR GAMES ]</button>
     </div>
+
+    <!-- UI Template for Model Selection -->
+    <template id="model-options">
+        <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+        <option value="z-ai/glm-5">z-ai/glm-5</option>
+        <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+        <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+        <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+        <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+        <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+    </template>
 
     <div class="arena">
 
-        <!-- Sol Panel: Batı Blok -->
+        <!-- Sol Panel: Batı & Güney -->
         <div class="side-panels">
             <!-- ENG -->
             <div class="agent-panel eng" id="panel-A1">
-                <h2 class="agent-title" style="color:var(--eng-color)">🇬🇧 İngiltere (ENG)</h2>
-                <select id="model-A1"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A1">Bekliyor...</span>
+                <div class="agent-header">
+                    <h2 class="agent-title" style="color:var(--eng-color)">🇬🇧 İngiltere (ENG)</h2>
+                    <span class="status-badge" id="status-A1">Standby</span>
                 </div>
+                <select id="model-A1" class="model-select"></select>
                 <div class="log" id="log-A1"></div>
             </div>
 
             <!-- FRA -->
             <div class="agent-panel fra" id="panel-A2">
-                <h2 class="agent-title" style="color:var(--fra-color)">🇫🇷 Fransa (FRA)</h2>
-                <select id="model-A2"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A2">Bekliyor...</span>
+                <div class="agent-header">
+                    <h2 class="agent-title" style="color:var(--fra-color)">🇫🇷 Fransa (FRA)</h2>
+                    <span class="status-badge" id="status-A2">Standby</span>
                 </div>
+                <select id="model-A2" class="model-select"></select>
                 <div class="log" id="log-A2"></div>
-            </div>
-
-            <!-- GER -->
-            <div class="agent-panel ger" id="panel-A3">
-                <h2 class="agent-title" style="color:white">🇩🇪 Almanya (GER)</h2>
-                <select id="model-A3"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A3">Bekliyor...</span>
-                </div>
-                <div class="log" id="log-A3"></div>
             </div>
 
             <!-- ITA -->
             <div class="agent-panel ita" id="panel-A4">
-                <h2 class="agent-title" style="color:var(--ita-color)">🇮🇹 İtalya (ITA)</h2>
-                <select id="model-A4"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A4">Bekliyor...</span>
+                <div class="agent-header">
+                    <h2 class="agent-title" style="color:var(--ita-color)">🇮🇹 İtalya (ITA)</h2>
+                    <span class="status-badge" id="status-A4">Standby</span>
                 </div>
+                <select id="model-A4" class="model-select"></select>
                 <div class="log" id="log-A4"></div>
             </div>
         </div>
 
         <!-- ORTA PANEL (Oyun Durumu) -->
         <div class="matrix-panel">
-            <h3 style="margin-top:0; color:#cbd5e1; font-family: monospace;">Harita ve Skor</h3>
-            <div class="round-indicator" id="round-info">Status: Standby</div>
+            <div class="round-indicator" id="round-info">TERMINAL: STANDBY</div>
 
-            <!-- Skor Tablosu -->
-            <h4 style="margin-bottom:5px; margin-top: 20px;">[ SUPPLY CENTERS CONTROLLED ]</h4>
-            <div
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; background: #0f172a; padding: 15px; border-radius: 8px;">
-                <div style="color:var(--eng-color)">ENG: <span id="sc-A1">1</span></div>
-                <div style="color:var(--fra-color)">FRA: <span id="sc-A2">1</span></div>
-                <div style="color:white">GER: <span id="sc-A3">1</span></div>
-                <div style="color:var(--ita-color)">ITA: <span id="sc-A4">1</span></div>
-                <div style="color:var(--aus-color)">AUS: <span id="sc-A5">1</span></div>
-                <div style="color:var(--rus-color)">RUS: <span id="sc-A6">1</span></div>
-                <div style="color:var(--tur-color)">TUR: <span id="sc-A7">1</span></div>
+            <h4 class="section-title">Global Control (Supply Centers)</h4>
+            <div class="score-grid">
+                <div class="score-item" style="color:var(--eng-color)">
+                    <span>ENG</span> <span class="score-value" id="sc-A1">1</span>
+                </div>
+                <div class="score-item" style="color:var(--fra-color)">
+                    <span>FRA</span> <span class="score-value" id="sc-A2">1</span>
+                </div>
+                <div class="score-item" style="color:var(--ger-color)">
+                    <span>GER</span> <span class="score-value" id="sc-A3">1</span>
+                </div>
+                <div class="score-item" style="color:var(--ita-color)">
+                    <span>ITA</span> <span class="score-value" id="sc-A4">1</span>
+                </div>
+                <div class="score-item" style="color:var(--rus-color)">
+                    <span>RUS</span> <span class="score-value" id="sc-A5">1</span>
+                </div>
             </div>
 
-            <!-- BÖLGE TABLOSU (Ajan Orduları Nerede?) -->
-            <h4 style="margin-bottom:5px; margin-top: 20px;">[ UNIT LOCATIONS ]</h4>
-            <div id="unit-locations"
-                style="font-size: 13px; color: #94a3b8; text-align: left; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; line-height: 1.6;">
-                <i>Oyun başladığında konumlar buraya düşecek.</i>
+            <h4 class="section-title">Tactical Unit Locations</h4>
+            <div id="unit-locations">
+                <i style="color:#64748b;">Awaiting deployment signals...</i>
             </div>
         </div>
 
-        <!-- Sağ Panel: Doğu Blok -->
+        <!-- Sağ Panel: Merkez & Doğu -->
         <div class="side-panels">
-            <!-- AUS -->
-            <div class="agent-panel aus" id="panel-A5">
-                <h2 class="agent-title" style="color:var(--aus-color)">🇦🇹 Avusturya (AUS)</h2>
-                <select id="model-A5"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A5">Bekliyor...</span>
+            <!-- GER -->
+            <div class="agent-panel ger" id="panel-A3">
+                <div class="agent-header">
+                    <h2 class="agent-title" style="color:var(--ger-color)">🇩🇪 Almanya (GER)</h2>
+                    <span class="status-badge" id="status-A3">Standby</span>
                 </div>
-                <div class="log" id="log-A5"></div>
+                <select id="model-A3" class="model-select"></select>
+                <div class="log" id="log-A3"></div>
             </div>
 
             <!-- RUS -->
-            <div class="agent-panel rus" id="panel-A6">
-                <h2 class="agent-title" style="color:var(--rus-color)">🇷🇺 Rusya (RUS)</h2>
-                <select id="model-A6"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A6">Bekliyor...</span>
+            <div class="agent-panel rus" id="panel-A5">
+                <div class="agent-header">
+                    <h2 class="agent-title" style="color:var(--rus-color)">🇷🇺 Rusya (RUS)</h2>
+                    <span class="status-badge" id="status-A5">Standby</span>
                 </div>
-                <div class="log" id="log-A6"></div>
-            </div>
-
-            <!-- TUR -->
-            <div class="agent-panel tur" id="panel-A7">
-                <h2 class="agent-title" style="color:var(--tur-color)">🇹🇷 Osmanlı (TUR)</h2>
-                <select id="model-A7"
-                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
-                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
-                    <option value="z-ai/glm-5">z-ai/glm-5</option>
-                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
-                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
-                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
-                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
-                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
-                </select>
-                <div style="text-align: center;">
-                    <span class="status-badge" id="status-A7">Bekliyor...</span>
-                </div>
-                <div class="log" id="log-A7"></div>
+                <select id="model-A5" class="model-select"></select>
+                <div class="log" id="log-A5"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- UI Logic Script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Inject select options
+        const opts = document.getElementById('model-options').innerHTML;
+        document.querySelectorAll('.model-select').forEach(el => el.innerHTML = opts);
+
         const socket = io();
 
         function startSimulation() {
-            // Butona basıldığında UI'yi sıfırla
-            for (let i = 1; i <= 7; i++) {
+            // UI statü sıfırlama
+            for (let i = 1; i <= 5; i++) {
+                if (i === 6 || i === 7) continue; // just in case
                 document.getElementById(`log-A${i}`).innerHTML = '';
-                document.getElementById(`status-A${i}`).innerText = 'Bağlanıyor...';
+                document.getElementById(`status-A${i}`).innerText = 'Connecting...';
                 document.getElementById(`status-A${i}`).className = 'status-badge';
             }
 
-            // Client'tan Modelleri topla (Artık aynı model seçilse bile API requestleri ayrılıyor)
+            // A1 model will be used server-side globally as fallback limit due to backend architecture limits
             const payload = {
                 model1: document.getElementById('model-A1').value,
-                // Serverda geri kalan Ajanlar da 'model1' property'siyle test ediliyor. 
-                // İleride istenirse model2, model3, model7 eklenebilir. Şimdilik arayüzde seçilen A1 değeri hepsini kapsayacak (Çünkü server'da kod ona göre yazıldı).
-                // Tam birebir eşleştirme için server update'i gerekmesin diye hepsini gönderiyoruz, ama server model1'i kullanıyor.
             };
-
             socket.emit('startMatch', payload);
         }
 
@@ -435,44 +527,47 @@
             const data = event.data;
 
             if (type === 'roundStarted') {
-                document.getElementById('round-info').innerText = `🔥 Round ${data.round} | Phase: [${data.phase}]`;
+                document.getElementById('round-info').innerText = `[ FAZ: ${data.phase} ] / TUR: ${data.round}`;
             }
             else if (type === 'agentThinking') {
                 const badge = document.getElementById(`status-${data.agentId}`);
-                badge.innerText = '🧠 Müzakere Düşünüyor...';
-                badge.classList.add('thinking');
+                if (badge) {
+                    badge.innerText = 'Calculating...';
+                    badge.className = 'status-badge thinking';
+                }
             }
             else if (type === 'agentActed') {
                 const badge = document.getElementById(`status-${data.agentId}`);
-                badge.innerText = '✅ Hazır';
-                badge.classList.remove('thinking');
+                if (badge) {
+                    badge.innerText = 'Ready';
+                    badge.className = 'status-badge';
+                }
 
                 const logBox = document.getElementById(`log-${data.agentId}`);
+                if (!logBox) return;
 
                 let htmlBlock = '';
 
-                // Müzakere Hamlesi (Mesaj Gönderimi)
                 if (data.action === 'action_send_message') {
                     const target = data.args.target_country || 'Kimse';
                     const msg = data.args.message || '';
                     htmlBlock = `
-                        <div style="font-weight:bold; color: #0ea5e9;">[Sms to -> ${target}]</div>
+                        <div style="font-weight:600; color: #38bdf8; font-family: monospace;">[MSG -> ${target}]</div>
                         <div class="msg-bubble">"${msg}"</div>
-                        <div style="color:#94a3b8; font-style:italic; font-size:12px; margin-top:5px;">(İçses: ${data.args.reasoning})</div>
+                        <div class="reasoning-text">Secret Goal: ${data.args.reasoning}</div>
                      `;
                 }
-                // Askeri Hamle (Action Submit)
                 else if (data.action === 'action_submit_orders') {
                     const orders = Array.isArray(data.args.orders) ? data.args.orders : [];
-                    let orderStr = orders.map(o => `· ${o.from_region} --[${o.type}]--> ${o.target_region}`).join('<br>');
+                    let orderStr = orders.map(o => `<span style="color:#fbbf24;">${o.from_region}</span> [${o.type}] ➔ <span style="color:#f87171;">${o.target_region}</span>`).join('<br>');
 
                     htmlBlock = `
-                        <div style="font-weight:bold; color: #ef4444;">[ASKERİ EMİRLER İLETİLDİ]</div>
-                        <div style="color:#e2e8f0; margin-top:5px; font-family: monospace;">${orderStr}</div>
-                        <div style="color:#94a3b8; font-style:italic; font-size:12px; margin-top:5px;">(Strateji: ${data.args.reasoning})</div>
+                        <div style="font-weight:600; color: #ef4444; font-family: monospace;">[ORDERS TRANSMITTED]</div>
+                        <div style="margin:8px 0; font-family: 'Fira Code', monospace; font-size: 11px; background: rgba(0,0,0,0.5); padding:8px; border-radius:4px;">${orderStr}</div>
+                        <div class="reasoning-text">Strategy: ${data.args.reasoning}</div>
                      `;
                 } else {
-                    htmlBlock = `<div style="font-weight:bold; color: #94a3b8;">${data.action}()</div>`;
+                    htmlBlock = `<div style="font-weight:600; color: #94a3b8;">${data.action}()</div>`;
                 }
 
                 const entry = document.createElement('span');
@@ -482,32 +577,36 @@
             else if (type === 'roundEnded') {
                 const state = JSON.parse(data.stateSnapshot);
 
-                // Puanları Güncelle
-                for (let i = 1; i <= 7; i++) {
+                // Update Scores
+                for (let i = 1; i <= 5; i++) {
                     const el = document.getElementById(`sc-A${i}`);
                     if (el && state.scores[`A${i}`] !== undefined) {
                         el.innerText = state.scores[`A${i}`];
                     }
                 }
 
-                // Ordu lokasyon panelini (Haritayı) güncelle
+                // Update Map Units
                 const unitHtml = Object.keys(state.unitLocations).map(id => {
-                    return `<b>${id}:</b> [${state.unitLocations[id].join(', ')}]`;
+                    // ID to short name
+                    const names = { A1: 'ENG', A2: 'FRA', A3: 'GER', A4: 'ITA', A5: 'RUS' };
+                    return `<b>[${names[id] || id}]</b>: <span style="color:#38bdf8;">${state.unitLocations[id].join(', ')}</span>`;
                 }).join('<br>');
-
                 document.getElementById('unit-locations').innerHTML = unitHtml;
 
             }
             else if (type === 'matchEnded') {
-                document.getElementById('round-info').innerText = `🏁 DIPLOMACY GAME OVER!`;
-                for (let i = 1; i <= 7; i++) {
+                document.getElementById('round-info').innerText = `[ SYSTEM HALTED - SIMULATION COMPLETE ]`;
+                for (let i = 1; i <= 5; i++) {
                     const b = document.getElementById(`status-A${i}`);
-                    if (b) b.innerText = 'Bitti';
+                    if (b) {
+                        b.innerText = 'Finished';
+                        b.className = 'status-badge';
+                    }
                 }
             }
             else if (type === 'error') {
-                alert('Bir hata oluştu: ' + data.error);
-                document.getElementById('round-info').innerText = `❌ Hata Oluştu`;
+                document.getElementById('round-info').innerText = `[ KERNEL PANIC - ERROR ]`;
+                alert('A systemic error occurred: ' + data.error);
             }
         });
     </script>

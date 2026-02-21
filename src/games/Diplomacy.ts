@@ -25,8 +25,8 @@ export class Diplomacy implements Game {
     private currentOrders: Record<string, any[]> = {};
 
     constructor(players: BaseAgent[], maxRounds: number = 5) {
-        if (players.length !== 7) {
-            console.warn("DIKKAT: Diplomacy normalde 7 oyuncu için tasarlanmıştır. Şu an test ediliyor.");
+        if (players.length !== 5) {
+            console.warn("DIKKAT: Diplomacy normalde 7 oyuncu için tasarlanmıştır. Şu an test için 5 oyuncu (ENG, FRA, GER, ITA, RUS) ile çalışıyor.");
         }
         this.players = players;
 

@@ -183,9 +183,9 @@ export class ActionRegistry {
                         items: {
                             type: 'object',
                             properties: {
-                                from_region: { type: 'string', description: 'Emri veren ordunun bulunduğu bölge.' },
+                                from_region: { type: 'string', description: 'Emri veren ordunun bulunduğu bölge (örnek: Berlin).' },
                                 type: { type: 'string', enum: ['MOVE', 'SUPPORT', 'HOLD'], description: 'Emir Türü (Hareket, Destek, Bekle)' },
-                                target_region: { type: 'string', description: 'Saldırılacak, savunulacak veya desteklenecek hedef bölge.' },
+                                target_region: { type: 'string', enum: ['London', 'Paris', 'Berlin', 'Rome', 'Vienna', 'Moscow', 'Constantinople', 'Balkans', 'Spain', 'Sweden', 'Warsaw', 'Ukraine', 'NorthSea', 'MedSea', 'BlackSea'], description: 'Saldırılacak, savunulacak veya desteklenecek hedef bölge. YALNIZCA geçerli bu bölgelerden birini seç!' },
                                 supported_country_id: { type: 'string', description: 'Eğer SUPPORT ediyorsanız, hangi müttefik ülkenin ordusunu desteklediğinizi yazın.' }
                             },
                             required: ['from_region', 'type', 'target_region']

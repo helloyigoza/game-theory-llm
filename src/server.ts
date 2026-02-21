@@ -29,6 +29,9 @@ Amacın Avrupa haritasındaki 15 hayati bölgenin (Supply Center) çoğunu (+10)
 Şu anki hedefin Beklenen Faydanı (Expected Utility) artırmak için diğer ülkelerle sahte veya gerçek Müttefiklikler kurmak,
 doğru zamanda onlara ihanet etmek ve kendi ordularını en optimize şekilde hareket ettirmektir.
 
+Mevcut 15 Bölge: London, Paris, Berlin, Rome, Vienna, Moscow, Constantinople, Balkans, Spain, Sweden, Warsaw, Ukraine, NorthSea, MedSea, BlackSea.
+ASLA kendi kafandan yeni bölge, ülke adası veya kıta sallama. SADECE bu 15 bölgeyi (tam olarak yazıldığı gibi) kullanabilirsin!
+
 Kurallar:
 - Müzakere Fazı: Diğer ülkelere gizli mesajlar (action_send_message) atarak onları kandırır veya onlardan destek (Support) istersin. Hedeflerine ulaşmak için NLP (Doğal Dil) yeteneklerini sonuna kadar kullanıp ikna edici ve manipülatif olmalısın.
 - Action Fazı: Ordularına Move (Hareket), Support (Destek) veya Hold (Bekle) emirleri (action_submit_orders) verirsin.
@@ -57,32 +60,29 @@ io.on('connection', (socket) => {
             const france = new LLMAgent('A2', 'Fransa (FRA)', diplomacyContext, apiKey, m);
             const germany = new LLMAgent('A3', 'Almanya (GER)', diplomacyContext, apiKey, m);
             const italy = new LLMAgent('A4', 'İtalya (ITA)', diplomacyContext, apiKey, m);
-            const austria = new LLMAgent('A5', 'Avusturya (AUS)', diplomacyContext, apiKey, m);
-            const russia = new LLMAgent('A6', 'Rusya (RUS)', diplomacyContext, apiKey, m);
-            const turkey = new LLMAgent('A7', 'Osmanlı (TUR)', diplomacyContext, apiKey, m);
+            const russia = new LLMAgent('A5', 'Rusya (RUS)', diplomacyContext, apiKey, m);
 
-            const players = [england, france, germany, italy, austria, russia, turkey];
-            const game = new Diplomacy(players, 5); // 5 Roundluk büyük savaş
-            matchEngine = new MatchEngine(game);
+            const players = [england, france, germany, italy, russia];
+            const game = new Diplomacy(players, 5); // 5 Roundluk mini savaş
             matchEngine = new MatchEngine(game);
 
             // Eventleri Frontend'e Fırlat (Socket.io)
-            matchEngine.on('matchStarted', (data) => io.emit('gameEvent', { type: 'matchStarted', data }));
-            matchEngine.on('roundStarted', (data) => io.emit('gameEvent', { type: 'roundStarted', data }));
-            matchEngine.on('agentThinking', (data) => io.emit('gameEvent', { type: 'agentThinking', data }));
-            matchEngine.on('agentActed', (data) => io.emit('gameEvent', { type: 'agentActed', data }));
-            matchEngine.on('roundEnded', (data) => io.emit('gameEvent', { type: 'roundEnded', data }));
+            matchEngine.on('matchStarted', (data) => io.emit('matchEvents', { type: 'matchStarted', data }));
+            matchEngine.on('roundStarted', (data) => io.emit('matchEvents', { type: 'roundStarted', data }));
+            matchEngine.on('agentThinking', (data) => io.emit('matchEvents', { type: 'agentThinking', data }));
+            matchEngine.on('agentActed', (data) => io.emit('matchEvents', { type: 'agentActed', data }));
+            matchEngine.on('roundEnded', (data) => io.emit('matchEvents', { type: 'roundEnded', data }));
             matchEngine.on('matchEnded', (data) => {
-                io.emit('gameEvent', { type: 'matchEnded', data });
+                io.emit('matchEvents', { type: 'matchEnded', data });
                 matchEngine = null; // Sıfırla
             });
-            matchEngine.on('agentError', (data) => io.emit('gameEvent', { type: 'error', data }));
+            matchEngine.on('agentError', (data) => io.emit('matchEvents', { type: 'error', data }));
 
             socket.emit('serverMessage', '🎮 Maç Başlatıldı!');
             await matchEngine.runMatch();
 
         } catch (e: any) {
-            io.emit('gameEvent', { type: 'error', data: { message: e.message } });
+            io.emit('matchEvents', { type: 'error', data: { error: e.message } });
             matchEngine = null;
         }
     });
