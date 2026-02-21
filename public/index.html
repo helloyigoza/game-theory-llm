@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Theory LLM Simulator</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #11141c;
+            --text-color: #e2e8f0;
+            --accent: #d97706;
+            /* Amber / Diplomacy color */
+
+            /* Diplomacy Colors */
+            --eng-color: #3b82f6;
+            /* Blue */
+            --fra-color: #06b6d4;
+            /* Light Blue */
+            --ger-color: #1a202c;
+            /* Dark Grey */
+            --ita-color: #10b981;
+            /* Green */
+            --aus-color: #ef4444;
+            /* Red */
+            --rus-color: #fce7f3;
+            /* White/Pinkish */
+            --tur-color: #f59e0b;
+            /* Yellow */
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-start {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            font-weight: bold;
+        }
+
+        .btn-start:hover {
+            transform: scale(1.05);
+            background-color: #2563eb;
+        }
+
+        .arena {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .side-panels {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .agent-panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid var(--accent);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            min-height: 250px;
+        }
+
+        .agent-panel.eng {
+            border-top-color: var(--eng-color);
+        }
+
+        .agent-panel.fra {
+            border-top-color: var(--fra-color);
+        }
+
+        .agent-panel.ger {
+            border-top-color: var(--ger-color);
+            border: 1px solid #334155;
+            border-top: 4px solid var(--ger-color);
+        }
+
+        .agent-panel.ita {
+            border-top-color: var(--ita-color);
+        }
+
+        .agent-panel.aus {
+            border-top-color: var(--aus-color);
+        }
+
+        .agent-panel.rus {
+            border-top-color: var(--rus-color);
+        }
+
+        .agent-panel.tur {
+            border-top-color: var(--tur-color);
+        }
+
+        .agent-title {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #334155;
+            text-align: center;
+        }
+
+        .thinking {
+            animation: pulse 1.5s infinite;
+            background: #eab308;
+            color: #000;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .action-log {
+            background: #0b1120;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+        }
+
+        .log>span:not(:last-child) {
+            border-bottom: 1px solid #334155;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Message Bubble specific */
+        .msg-bubble {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 5px;
+            border-left: 3px solid #0ea5e9;
+            font-style: italic;
+            color: #f1f5f9;
+        }
+
+        .matrix-panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            overflow-y: auto;
+        }
+
+        .payoff-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .payoff-table th,
+        .payoff-table td {
+            border: 1px solid #334155;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .payoff-table th {
+            background-color: #0f172a;
+            color: #94a3b8;
+        }
+
+        .score-board {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #f8fafc;
+        }
+
+        .round-indicator {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1 style="color: var(--accent); font-family: monospace;">🌍 AI DIPLOMACY SUMMIT</h1>
+        <p style="color: #94a3b8; max-width: 800px; margin: 0 auto 20px auto;">Oyun Teorisi ve NLP'nin Everest'i:
+            Diplomacy. 7 farklı LLM bir haritayı yönetiyor. Müzakere turunda (Negotiation) özel mesajlaşmalarla
+            sahte/gerçek ittifaklar kurup, Eylem (Action) turunda askeri hamle yaparak (Move/Support) 10 Supply Center'a
+            (Skor) ulaşmaya çalışıyorlar.</p>
+        <button class="btn-start" onclick="startSimulation()">[ EXECUTE: OPERATION_DIPLOMACY ]</button>
+    </div>
+
+    <div class="arena">
+
+        <!-- Sol Panel: Batı Blok -->
+        <div class="side-panels">
+            <!-- ENG -->
+            <div class="agent-panel eng" id="panel-A1">
+                <h2 class="agent-title" style="color:var(--eng-color)">🇬🇧 İngiltere (ENG)</h2>
+                <select id="model-A1"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A1">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A1"></div>
+            </div>
+
+            <!-- FRA -->
+            <div class="agent-panel fra" id="panel-A2">
+                <h2 class="agent-title" style="color:var(--fra-color)">🇫🇷 Fransa (FRA)</h2>
+                <select id="model-A2"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A2">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A2"></div>
+            </div>
+
+            <!-- GER -->
+            <div class="agent-panel ger" id="panel-A3">
+                <h2 class="agent-title" style="color:white">🇩🇪 Almanya (GER)</h2>
+                <select id="model-A3"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A3">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A3"></div>
+            </div>
+
+            <!-- ITA -->
+            <div class="agent-panel ita" id="panel-A4">
+                <h2 class="agent-title" style="color:var(--ita-color)">🇮🇹 İtalya (ITA)</h2>
+                <select id="model-A4"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A4">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A4"></div>
+            </div>
+        </div>
+
+        <!-- ORTA PANEL (Oyun Durumu) -->
+        <div class="matrix-panel">
+            <h3 style="margin-top:0; color:#cbd5e1; font-family: monospace;">Harita ve Skor</h3>
+            <div class="round-indicator" id="round-info">Status: Standby</div>
+
+            <!-- Skor Tablosu -->
+            <h4 style="margin-bottom:5px; margin-top: 20px;">[ SUPPLY CENTERS CONTROLLED ]</h4>
+            <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; background: #0f172a; padding: 15px; border-radius: 8px;">
+                <div style="color:var(--eng-color)">ENG: <span id="sc-A1">1</span></div>
+                <div style="color:var(--fra-color)">FRA: <span id="sc-A2">1</span></div>
+                <div style="color:white">GER: <span id="sc-A3">1</span></div>
+                <div style="color:var(--ita-color)">ITA: <span id="sc-A4">1</span></div>
+                <div style="color:var(--aus-color)">AUS: <span id="sc-A5">1</span></div>
+                <div style="color:var(--rus-color)">RUS: <span id="sc-A6">1</span></div>
+                <div style="color:var(--tur-color)">TUR: <span id="sc-A7">1</span></div>
+            </div>
+
+            <!-- BÖLGE TABLOSU (Ajan Orduları Nerede?) -->
+            <h4 style="margin-bottom:5px; margin-top: 20px;">[ UNIT LOCATIONS ]</h4>
+            <div id="unit-locations"
+                style="font-size: 13px; color: #94a3b8; text-align: left; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; line-height: 1.6;">
+                <i>Oyun başladığında konumlar buraya düşecek.</i>
+            </div>
+        </div>
+
+        <!-- Sağ Panel: Doğu Blok -->
+        <div class="side-panels">
+            <!-- AUS -->
+            <div class="agent-panel aus" id="panel-A5">
+                <h2 class="agent-title" style="color:var(--aus-color)">🇦🇹 Avusturya (AUS)</h2>
+                <select id="model-A5"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A5">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A5"></div>
+            </div>
+
+            <!-- RUS -->
+            <div class="agent-panel rus" id="panel-A6">
+                <h2 class="agent-title" style="color:var(--rus-color)">🇷🇺 Rusya (RUS)</h2>
+                <select id="model-A6"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A6">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A6"></div>
+            </div>
+
+            <!-- TUR -->
+            <div class="agent-panel tur" id="panel-A7">
+                <h2 class="agent-title" style="color:var(--tur-color)">🇹🇷 Osmanlı (TUR)</h2>
+                <select id="model-A7"
+                    style="width:100%; padding: 5px; border-radius: 4px; background: #334155; color: white; border: none; font-size: 13px; outline: none; margin-bottom: 10px;">
+                    <option value="minimax/minimax-m2.5">minimax/minimax-m2.5</option>
+                    <option value="z-ai/glm-5">z-ai/glm-5</option>
+                    <option value="moonshotai/kimi-k2.5">moonshotai/kimi-k2.5</option>
+                    <option value="z-ai/glm-4.7-flash">z-ai/glm-4.7-flash</option>
+                    <option value="minimax/minimax-m2.1">minimax/minimax-m2.1</option>
+                    <option value="z-ai/glm-4.7">z-ai/glm-4.7</option>
+                    <option value="mistralai/mistral-small-creative">mistralai/mistral-small-creative</option>
+                </select>
+                <div style="text-align: center;">
+                    <span class="status-badge" id="status-A7">Bekliyor...</span>
+                </div>
+                <div class="log" id="log-A7"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- UI Logic Script -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function startSimulation() {
+            // Butona basıldığında UI'yi sıfırla
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById(`log-A${i}`).innerHTML = '';
+                document.getElementById(`status-A${i}`).innerText = 'Bağlanıyor...';
+                document.getElementById(`status-A${i}`).className = 'status-badge';
+            }
+
+            // Client'tan Modelleri topla (Artık aynı model seçilse bile API requestleri ayrılıyor)
+            const payload = {
+                model1: document.getElementById('model-A1').value,
+                // Serverda geri kalan Ajanlar da 'model1' property'siyle test ediliyor. 
+                // İleride istenirse model2, model3, model7 eklenebilir. Şimdilik arayüzde seçilen A1 değeri hepsini kapsayacak (Çünkü server'da kod ona göre yazıldı).
+                // Tam birebir eşleştirme için server update'i gerekmesin diye hepsini gönderiyoruz, ama server model1'i kullanıyor.
+            };
+
+            socket.emit('startMatch', payload);
+        }
+
+        socket.on('matchEvents', (event) => {
+            const type = event.type;
+            const data = event.data;
+
+            if (type === 'roundStarted') {
+                document.getElementById('round-info').innerText = `🔥 Round ${data.round} | Phase: [${data.phase}]`;
+            }
+            else if (type === 'agentThinking') {
+                const badge = document.getElementById(`status-${data.agentId}`);
+                badge.innerText = '🧠 Müzakere Düşünüyor...';
+                badge.classList.add('thinking');
+            }
+            else if (type === 'agentActed') {
+                const badge = document.getElementById(`status-${data.agentId}`);
+                badge.innerText = '✅ Hazır';
+                badge.classList.remove('thinking');
+
+                const logBox = document.getElementById(`log-${data.agentId}`);
+
+                let htmlBlock = '';
+
+                // Müzakere Hamlesi (Mesaj Gönderimi)
+                if (data.action === 'action_send_message') {
+                    const target = data.args.target_country || 'Kimse';
+                    const msg = data.args.message || '';
+                    htmlBlock = `
+                        <div style="font-weight:bold; color: #0ea5e9;">[Sms to -> ${target}]</div>
+                        <div class="msg-bubble">"${msg}"</div>
+                        <div style="color:#94a3b8; font-style:italic; font-size:12px; margin-top:5px;">(İçses: ${data.args.reasoning})</div>
+                     `;
+                }
+                // Askeri Hamle (Action Submit)
+                else if (data.action === 'action_submit_orders') {
+                    const orders = Array.isArray(data.args.orders) ? data.args.orders : [];
+                    let orderStr = orders.map(o => `· ${o.from_region} --[${o.type}]--> ${o.target_region}`).join('<br>');
+
+                    htmlBlock = `
+                        <div style="font-weight:bold; color: #ef4444;">[ASKERİ EMİRLER İLETİLDİ]</div>
+                        <div style="color:#e2e8f0; margin-top:5px; font-family: monospace;">${orderStr}</div>
+                        <div style="color:#94a3b8; font-style:italic; font-size:12px; margin-top:5px;">(Strateji: ${data.args.reasoning})</div>
+                     `;
+                } else {
+                    htmlBlock = `<div style="font-weight:bold; color: #94a3b8;">${data.action}()</div>`;
+                }
+
+                const entry = document.createElement('span');
+                entry.innerHTML = htmlBlock;
+                logBox.prepend(entry);
+            }
+            else if (type === 'roundEnded') {
+                const state = JSON.parse(data.stateSnapshot);
+
+                // Puanları Güncelle
+                for (let i = 1; i <= 7; i++) {
+                    const el = document.getElementById(`sc-A${i}`);
+                    if (el && state.scores[`A${i}`] !== undefined) {
+                        el.innerText = state.scores[`A${i}`];
+                    }
+                }
+
+                // Ordu lokasyon panelini (Haritayı) güncelle
+                const unitHtml = Object.keys(state.unitLocations).map(id => {
+                    return `<b>${id}:</b> [${state.unitLocations[id].join(', ')}]`;
+                }).join('<br>');
+
+                document.getElementById('unit-locations').innerHTML = unitHtml;
+
+            }
+            else if (type === 'matchEnded') {
+                document.getElementById('round-info').innerText = `🏁 DIPLOMACY GAME OVER!`;
+                for (let i = 1; i <= 7; i++) {
+                    const b = document.getElementById(`status-A${i}`);
+                    if (b) b.innerText = 'Bitti';
+                }
+            }
+            else if (type === 'error') {
+                alert('Bir hata oluştu: ' + data.error);
+                document.getElementById('round-info').innerText = `❌ Hata Oluştu`;
+            }
+        });
+    </script>
+</body>
+
+</html>
